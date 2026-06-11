@@ -1,5 +1,6 @@
+@import "tailwindcss";
 body{
-  background:black;
+  /* background:black; */
   margin:0;
   font-family:monospace;
   overflow-y:auto;
