@@ -1,10 +1,5 @@
-import  connectDB  from "@/lib/mongodb.js";
-import Product from "@/models/product.model.js";
-import { createProductSchema } from "@/validations/product.validation";
-import {
-  successResponse,
-  errorResponse,
-} from "@/utils/response";
+import connectDB from "@/app/lib/mongodb.js";
+import Product from "@/app/models/product.model.js";
 
 export async function POST(req) {
   try {
@@ -15,26 +10,29 @@ export async function POST(req) {
     body.mrp = Number(body.mrp);
     body.price = Number(body.price);
 
-    const validation =
-      createProductSchema.safeParse(body);
+    const product = await Product.create(body);
 
-    if (!validation.success) {
-      return errorResponse(
-        validation.error.errors[0].message,
-        400
-      );
-    }
-
-    const product = await Product.create(
-      validation.data
+    return Response.json(
+      {
+        success: true,
+        message: "Product created successfully",
+        data: product,
+      },
+      {
+        status: 201,
+      }
     );
-
-    return successResponse(product, 201);
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
-    return errorResponse(
-      "Internal Server Error"
+    return Response.json(
+      {
+        success: false,
+        message: "Internal Server Error",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
@@ -47,10 +45,27 @@ export async function GET() {
       createdAt: -1,
     });
 
-    return successResponse(products);
+    return Response.json(
+      {
+        success: true,
+        message: "Products fetched successfully",
+        data: products,
+      },
+      {
+        status: 200,
+      }
+    );
   } catch (error) {
-    return errorResponse(
-      "Internal Server Error"
+    console.error(error);
+
+    return Response.json(
+      {
+        success: false,
+        message: "Internal Server Error",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

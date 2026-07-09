@@ -1,31 +1,47 @@
-import  connectDB  from "@/lib/mongodb.js";
-import Product from "@/models/product.model.js";
-import {
-  successResponse,
-  errorResponse,
-} from "@/utils/response";
+import connectDB from "@/app/lib/mongodb.js";
+import Product from "@/app/models/product.model.js";
 
 export async function GET(req, { params }) {
   try {
     await connectDB();
 
     const { id } = await params;
-    console.log(id);
-    const product = await Product.findById(
-      id
-    );
+
+    const product = await Product.findById(id);
 
     if (!product) {
-      return errorResponse(
-        "Product not found",
-        404
+      return Response.json(
+        {
+          success: false,
+          message: "Product not found",
+        },
+        {
+          status: 404,
+        }
       );
     }
 
-    return successResponse(product);
+    return Response.json(
+      {
+        success: true,
+        message: "Product fetched successfully",
+        data: product,
+      },
+      {
+        status: 200,
+      }
+    );
   } catch (error) {
-    return errorResponse(
-      "Internal Server Error"
+    console.error(error);
+
+    return Response.json(
+      {
+        success: false,
+        message: "Internal Server Error",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
@@ -34,25 +50,43 @@ export async function DELETE(req, { params }) {
   try {
     await connectDB();
 
-    let { id } = await params;
-    const product =
-      await Product.findByIdAndDelete(
-        id
-      );
+    const { id } = await params;
+
+    const product = await Product.findByIdAndDelete(id);
 
     if (!product) {
-      return errorResponse(
-        "Product not found",
-        404
+      return Response.json(
+        {
+          success: false,
+          message: "Product not found",
+        },
+        {
+          status: 404,
+        }
       );
     }
 
-    return successResponse({
-      message: "Deleted successfully",
-    });
+    return Response.json(
+      {
+        success: true,
+        message: "Product deleted successfully",
+        data: product,
+      },
+      {
+        status: 200,
+      }
+    );
   } catch (error) {
-    return errorResponse(
-      "Internal Server Error"
+    console.error(error);
+
+    return Response.json(
+      {
+        success: false,
+        message: "Internal Server Error",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
