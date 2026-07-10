@@ -9,6 +9,9 @@ export default function CheckoutPage({ params }) {
   const [selectedImage, setSelectedImage] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
 const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [shippingCharge, setShippingCharge] = useState(0);
+  const [isCheckingRates, setIsCheckingRates] = useState(false);
+  const [pincodeError, setPincodeError] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -20,6 +23,38 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
     pincode: "",
     country: "India",
   });
+
+  useEffect(() => {
+    const checkShipping = async () => {
+      const pin = formData.pincode.trim();
+      if (/^\d{6}$/.test(pin)) {
+        setIsCheckingRates(true);
+        setPincodeError("");
+        try {
+          const res = await fetch(`/api/shiprocket/rates?delivery_postcode=${pin}`);
+          const result = await res.json();
+          if (result.success && result.data) {
+            setShippingCharge(result.data.rate);
+            setPincodeError("");
+          } else {
+            setShippingCharge(0);
+            setPincodeError(result.message || "Pincode is not serviceable.");
+          }
+        } catch (err) {
+          console.error(err);
+          setShippingCharge(0);
+          setPincodeError("Failed to check serviceability.");
+        } finally {
+          setIsCheckingRates(false);
+        }
+      } else {
+        setShippingCharge(0);
+        setPincodeError("");
+      }
+    };
+
+    checkShipping();
+  }, [formData.pincode]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -45,6 +80,37 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
         return;
       }
 
+      if (pincodeError) {
+        alert(pincodeError);
+        return;
+      }
+      if (isCheckingRates) {
+        alert("Calculating shipping rates. Please wait...");
+        return;
+      }
+      if (!formData.pincode || formData.pincode.trim().length !== 6) {
+        alert("Please enter a valid 6-digit pincode.");
+        return;
+      }
+
+      // Phone number validation (Shiprocket requires valid 10-digit number starting with 6-9)
+      const phoneClean = formData.phone.trim().replace(/\D/g, "");
+      if (!/^[6-9]\d{9}$/.test(phoneClean)) {
+        alert("Please enter a valid 10-digit phone number starting with 6, 7, 8, or 9.");
+        return;
+      }
+
+      // Address validation matching Shiprocket's constraints
+      const addressVal = formData.address.trim();
+      if (addressVal.length < 10) {
+        alert("Address must be at least 10 characters long.");
+        return;
+      }
+      if (!/\d/.test(addressVal)) {
+        alert("Address must include a House no., Flat no., Building, Plot, or Road number/digit.");
+        return;
+      }
+
       const payload = {
         customer: { name: formData.name, email: formData.email, phone: formData.phone },
         shippingAddress: {
@@ -53,6 +119,7 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
         },
         product,
         selectedSize,
+        shippingCharge,
       };
 
       const response = await fetch("/api/orders", {
@@ -86,7 +153,7 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         order_id: result.razorpayOrderId,
-        amount: product.price * 100,
+        amount: (product.price + shippingCharge) * 100,
         currency: "INR",
         name: "IT World",
         description: product.title,
@@ -107,6 +174,8 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
               alert("Payment Successful");
               setFormData({ name: "", email: "", phone: "", address: "", city: "", state: "", pincode: "", country: "India" });
               setSelectedSize("");
+              setShippingCharge(0);
+              setPincodeError("");
             } else {
               alert(verifyResult.message || "Payment Verification Failed");
             }
@@ -364,11 +433,41 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
                     readOnly />
                 </div>
 
+                {/* Pricing Summary */}
+                <div className="border-t border-[#1a1a1a] pt-4 mt-6 space-y-2 text-xs font-sans">
+                  <div className="flex justify-between text-[#666]">
+                    <span>Subtotal</span>
+                    <span>₹{product.price.toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="flex justify-between text-[#666]">
+                    <span>Shipping</span>
+                    <span>
+                      {isCheckingRates ? (
+                        <span className="text-[#8a7a5a] animate-pulse">Calculating...</span>
+                      ) : pincodeError ? (
+                        <span className="text-red-500">Not Serviceable</span>
+                      ) : shippingCharge > 0 ? (
+                        `₹${shippingCharge.toLocaleString("en-IN")}`
+                      ) : (
+                        "Enter 6-digit Pincode"
+                      )}
+                    </span>
+                  </div>
+                  {pincodeError && (
+                    <p className="text-[10px] text-red-500 mt-1">{pincodeError}</p>
+                  )}
+                  <div className="flex justify-between text-[#e8e0d0] border-t border-[#1a1a1a] pt-2 font-medium">
+                    <span>Total</span>
+                    <span>₹{(product.price + shippingCharge).toLocaleString("en-IN")}</span>
+                  </div>
+                </div>
+
                 {/* CTA */}
                 <div className="pt-6 pb-4">
                   <button type="submit"
-                    className="w-full border border-[#8a7a5a] text-[#8a7a5a] py-4 text-[10px] tracking-[.25em] uppercase font-sans hover:bg-[#8a7a5a] hover:text-[#080808] transition-all duration-500">
-                    Acquire · ₹{product.price.toLocaleString("en-IN")}
+                    disabled={isCheckingRates || !!pincodeError || !formData.pincode || formData.pincode.length !== 6}
+                    className="w-full border border-[#8a7a5a] text-[#8a7a5a] py-4 text-[10px] tracking-[.25em] uppercase font-sans hover:bg-[#8a7a5a] hover:text-[#080808] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500">
+                    {isCheckingRates ? "Calculating Shipping..." : `Acquire · ₹${(product.price + shippingCharge).toLocaleString("en-IN")}`}
                   </button>
                   <p className="text-center text-[9px] tracking-[.15em] uppercase text-[#333] font-sans mt-4">
                     Secured via Razorpay

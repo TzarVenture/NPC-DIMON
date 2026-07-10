@@ -2,6 +2,7 @@ import connectDB from "@/app/lib/mongodb";
 import Order from "@/app/models/order.model";
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { createShiprocketOrder, assignAwb } from "@/lib/shiprocket";
 
 const generateSignature = (razorpayOrderId, razorpayPaymentId) => {
   return crypto
@@ -52,6 +53,29 @@ export async function POST(request) {
     order.payment.razorpaySignature = razorpaySignature;
 
     order.payment.status = "paid";
+
+    // Place order in Shiprocket
+    try {
+      const shippingCharge = order.shipping?.shippingCharge || 0;
+      const srOrder = await createShiprocketOrder(order, shippingCharge);
+      
+      order.shipping.shiprocketOrderId = srOrder.shiprocketOrderId;
+      order.shipping.status = "processing";
+      console.log(`[SHIPROCKET] Order created successfully. Order ID: ${srOrder.shiprocketOrderId}, Shipment ID: ${srOrder.shipmentId}`);
+
+      // Assign AWB to shipment
+      try {
+        const awbDetails = await assignAwb(srOrder.shipmentId);
+        order.shipping.awbCode = awbDetails.awbCode;
+        order.shipping.courierName = awbDetails.courierName;
+        order.shipping.trackingUrl = awbDetails.trackingUrl;
+        console.log(`[SHIPROCKET] AWB assigned successfully. Courier: ${awbDetails.courierName}, AWB: ${awbDetails.awbCode}, Tracking URL: ${awbDetails.trackingUrl}`);
+      } catch (awbError) {
+        console.error("Failed to assign Shiprocket AWB:", awbError);
+      }
+    } catch (shiprocketError) {
+      console.error("Failed to create order in Shiprocket:", shiprocketError);
+    }
 
     await order.save();
 

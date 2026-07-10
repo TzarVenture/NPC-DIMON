@@ -19,6 +19,29 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
+    shippingAddress: {
+      address: {
+        type: String,
+        required: true,
+      },
+      city: {
+        type: String,
+        required: true,
+      },
+      state: {
+        type: String,
+        required: true,
+      },
+      pincode: {
+        type: String,
+        required: true,
+      },
+      country: {
+        type: String,
+        default: "India",
+      },
+    },
+
     product: {
       productId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -84,6 +107,11 @@ const orderSchema = new mongoose.Schema(
       courierName: String,
 
       trackingUrl: String,
+
+      shippingCharge: {
+        type: Number,
+        default: 0,
+      },
     },
   },
   {

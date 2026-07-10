@@ -13,9 +13,11 @@ export async function POST(req) {
     await connectDB();
 
     const body = await req.json();
+    const shippingCharge = Number(body.shippingCharge) || 0;
+    const totalAmount = body.product.price + shippingCharge;
 
     const razorpayOrder = await razorpay.orders.create({
-      amount: body.product.price * 100,
+      amount: totalAmount * 100,
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
       notes: {
@@ -42,11 +44,16 @@ export async function POST(req) {
         quantity: 1,
       },
 
-      amount: body.product.price,
+      amount: totalAmount,
 
       payment: {
         razorpayOrderId: razorpayOrder.id,
         status: "pending",
+      },
+
+      shipping: {
+        status: "pending",
+        shippingCharge: shippingCharge,
       },
     });
 
