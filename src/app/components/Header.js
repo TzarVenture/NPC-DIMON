@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Header() {
   return (
-    <div className="topHeader" style={{color:"red"}}>
+    <div className="topHeader" style={{ color: "red", background: "black" }}>
       {/* LEFT: logo + brand */}
       <div className="leftHeader">
         <div className="logoBox">??</div>

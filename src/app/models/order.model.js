@@ -63,7 +63,15 @@ const orderSchema = new mongoose.Schema(
         type: Number,
         default: 1,
       },
+
+      // Size chosen by the customer at checkout (e.g. "M" or "9")
+      // Empty string for products with no sizing (e.g. accessories)
+      selectedSize: {
+        type: String,
+        default: "",
+      },
     },
+
 
     amount: {
       type: Number,

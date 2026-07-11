@@ -116,12 +116,15 @@ export async function createShiprocketOrder(order, shippingCharge, isRetry = fal
     shipping_is_billing: true,
     order_items: [
       {
-        name: order.product.title,
+        name: order.product.selectedSize
+          ? `${order.product.title} - Size ${order.product.selectedSize}`
+          : order.product.title,
         sku: order.product.productId.toString(),
         units: order.product.quantity || 1,
         selling_price: order.product.price,
       }
     ],
+
     payment_method: "Prepaid",
     sub_total: order.amount - shippingCharge,
     shipping_charges: shippingCharge,

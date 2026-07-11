@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { API_URL } from "@/config/constants";
 
 async function ProductCard({ product }) {
   const discount = product.mrp && product.mrp > product.price
@@ -102,7 +103,7 @@ async function ProductCard({ product }) {
 }
 
 export default async function ProductsPage() {
-  const response = await fetch("http://localhost:3000/api/products", {
+  const response = await fetch(`${API_URL}/api/products`, {
     cache: "no-store",
   });
 

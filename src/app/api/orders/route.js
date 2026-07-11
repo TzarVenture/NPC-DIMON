@@ -42,6 +42,8 @@ export async function POST(req) {
         price: body.product.price,
 
         quantity: 1,
+
+        selectedSize: body.selectedSize || "",
       },
 
       amount: totalAmount,

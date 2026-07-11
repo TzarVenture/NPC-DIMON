@@ -8,7 +8,7 @@ export default function CheckoutPage({ params }) {
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
-const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [shippingCharge, setShippingCharge] = useState(0);
   const [isCheckingRates, setIsCheckingRates] = useState(false);
   const [pincodeError, setPincodeError] = useState("");
@@ -155,7 +155,7 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
         order_id: result.razorpayOrderId,
         amount: (product.price + shippingCharge) * 100,
         currency: "INR",
-        name: "IT World",
+        name: "DIMON",
         description: product.title,
         prefill: { name: formData.name, email: formData.email, contact: formData.phone },
         handler: async (razorpayResponse) => {
@@ -214,19 +214,19 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
   return (
     <>
- <Script
-      src="https://checkout.razorpay.com/v1/checkout.js"
-      strategy="afterInteractive"
-      onLoad={() => setRazorpayLoaded(true)}
-      onError={() => console.error("Razorpay script failed to load")}
-    />
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
+        onLoad={() => setRazorpayLoaded(true)}
+        onError={() => console.error("Razorpay script failed to load")}
+      />
       <div className="min-h-screen bg-[#080808]">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-14">
 
           {/* Page eyebrow */}
           <div className="mb-10 md:mb-14">
             <p className="text-[9px] tracking-[.3em] uppercase text-[#444] font-sans">
-             DIMON — Checkout
+              DIMON — Checkout
             </p>
             <div className="w-8 h-px bg-[#2a2a2a] mt-3" />
           </div>
@@ -250,16 +250,15 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
                 {/* Thumbnails */}
                 {product.images?.length > 0 && (
-                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{scrollbarWidth: "none"}}>
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
                     {product.images.map((imgUrl, i) => (
                       <button
                         key={i}
                         onClick={() => setSelectedImage(imgUrl)}
-                        className={`flex-shrink-0 w-16 h-20 md:w-20 md:h-24 overflow-hidden border transition-all duration-300 ${
-                          selectedImage === imgUrl
+                        className={`flex-shrink-0 w-16 h-20 md:w-20 md:h-24 overflow-hidden border transition-all duration-300 ${selectedImage === imgUrl
                             ? "border-[#8a7a5a]"
                             : "border-[#1e1e1e] opacity-50 hover:opacity-80 hover:border-[#3a3a3a]"
-                        }`}
+                          }`}
                       >
                         <img
                           src={imgUrl}
@@ -354,11 +353,10 @@ const [razorpayLoaded, setRazorpayLoaded] = useState(false);
                       {product.sizes.map((size) => (
                         <button key={size} type="button"
                           onClick={() => setSelectedSize(size)}
-                          className={`px-4 py-2 text-xs tracking-[.12em] uppercase font-sans border transition-all duration-300 ${
-                            selectedSize === size
+                          className={`px-4 py-2 text-xs tracking-[.12em] uppercase font-sans border transition-all duration-300 ${selectedSize === size
                               ? "border-[#8a7a5a] text-[#e8e0d0] bg-[#1a1612]"
                               : "border-[#2a2a2a] text-[#555] hover:border-[#3a3a3a] hover:text-[#888]"
-                          }`}
+                            }`}
                         >
                           {size}
                         </button>
