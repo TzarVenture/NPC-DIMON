@@ -1,10 +1,11 @@
 // app/checkout/[id]/page.jsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Script from "next/script";
 
 export default function CheckoutPage({ params }) {
+  const sliderRef = useRef(null);
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
@@ -71,6 +72,12 @@ export default function CheckoutPage({ params }) {
 
   const handleChange = (e) =>
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const scrollThumbnails = (dir) => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollBy({ left: dir * 150, behavior: "smooth" });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -238,7 +245,7 @@ export default function CheckoutPage({ params }) {
               <div className="sticky top-8 space-y-3">
 
                 {/* Main image */}
-                <div className="overflow-hidden bg-[#0d0d0d] border border-[#1a1a1a] aspect-square md:aspect-[4/5]">
+                <div className="overflow-hidden bg-[#0d0d0d] border border-[#1a1a1a] aspect-square relative">
                   <img
                     src={selectedImage || product.image}
                     alt={product.title}
@@ -249,26 +256,54 @@ export default function CheckoutPage({ params }) {
                 </div>
 
                 {/* Thumbnails */}
-                {product.images?.length > 0 && (
-                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
-                    {product.images.map((imgUrl, i) => (
+                {(() => {
+                  const allImages = [...new Set([product.image, ...(product.images || [])])].filter(Boolean);
+                  if (allImages.length <= 1) return null;
+                  
+                  return (
+                    <div className="relative group">
                       <button
-                        key={i}
-                        onClick={() => setSelectedImage(imgUrl)}
-                        className={`flex-shrink-0 w-16 h-20 md:w-20 md:h-24 overflow-hidden border transition-all duration-300 ${selectedImage === imgUrl
-                            ? "border-[#8a7a5a]"
-                            : "border-[#1e1e1e] opacity-50 hover:opacity-80 hover:border-[#3a3a3a]"
-                          }`}
+                        onClick={() => scrollThumbnails(-1)}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 bg-[#080808] border border-[#2a2a2a] text-[#8a7a5a] w-8 h-8 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md hidden lg:flex hover:bg-[#1a1a1a]"
                       >
-                        <img
-                          src={imgUrl}
-                          alt={`View ${i + 1}`}
-                          className="w-full h-full object-cover object-top"
-                        />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                       </button>
-                    ))}
-                  </div>
-                )}
+
+                      <div 
+                        ref={sliderRef}
+                        className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x" 
+                        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                      >
+                        {allImages.map((imgUrl, i) => {
+                          const isSelected = (selectedImage || product.image) === imgUrl;
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => setSelectedImage(imgUrl)}
+                              className={`snap-start flex-shrink-0 w-16 h-20 md:w-20 md:h-24 overflow-hidden border transition-all duration-300 ${isSelected
+                                  ? "border-[#8a7a5a]"
+                                  : "border-[#1e1e1e] opacity-50 hover:opacity-80 hover:border-[#3a3a3a]"
+                                }`}
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`View ${i + 1}`}
+                                className="w-full h-full object-cover object-top"
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => scrollThumbnails(1)}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 bg-[#080808] border border-[#2a2a2a] text-[#8a7a5a] w-8 h-8 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-md hidden lg:flex hover:bg-[#1a1a1a]"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
